@@ -1,0 +1,111 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Modern Blue/Teal Theme */
+    --background: 210 40% 98%; /* Very light cool gray/blue */
+    --foreground: 210 25% 25%; /* Dark slate blue */
+
+    --card: 210 40% 98%; /* Same as background or slightly off for subtle layering */
+    --card-foreground: 210 25% 25%;
+
+    --popover: 210 40% 98%;
+    --popover-foreground: 210 25% 25%;
+
+    --primary: 210 70% 50%; /* Strong, medium blue */
+    --primary-foreground: 210 40% 98%; /* Very light, for text on primary */
+
+    --secondary: 200 60% 70%; /* Softer, lighter blue */
+    --secondary-foreground: 200 40% 20%; /* Darker text for secondary */
+
+    --muted: 210 30% 94%; /* Light cool gray */
+    --muted-foreground: 210 20% 45%; /* Medium cool gray */
+
+    --accent: 170 70% 45%; /* Vibrant teal */
+    --accent-foreground: 0 0% 100%; /* White text on accent for contrast */
+
+    --destructive: 0 70% 55%; /* A clear red (can remain standard) */
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 210 20% 88%; /* Border matching cool muted tones */
+    --input: 210 30% 96%; /* Input background slightly different from muted */
+    --ring: 210 70% 50%; /* Ring color matching primary */
+
+    --radius: 0.5rem;
+
+    /* Sidebar specific colors - light */
+    --sidebar-background: 210 30% 95%; /* Slightly darker/muted blue-gray for sidebar */
+    --sidebar-foreground: 210 25% 30%; /* Dark cool gray for sidebar text */
+    --sidebar-primary: 210 70% 50%; 
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 170 70% 45%; 
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 210 20% 85%; 
+    --sidebar-ring: 210 70% 50%;
+
+    /* Chart colors - define 5 distinct professional colors for the new theme */
+    --chart-1: 210 70% 50%;   /* primary (blue) */
+    --chart-2: 170 70% 45%;   /* accent (teal) */
+    --chart-3: 200 60% 70%;   /* secondary (lighter blue) */
+    --chart-4: 210 10% 60%;   /* medium cool gray */
+    --chart-5: 210 60% 40%;   /* darker, desaturated blue */
+  }
+
+  .dark {
+    --background: 210 20% 10%; /* Very dark slate blue */
+    --foreground: 210 30% 90%; /* Light cool gray */
+
+    --card: 210 20% 12%; /* Darker slate blue for Cards */
+    --card-foreground: 210 30% 90%;
+
+    --popover: 210 20% 10%;
+    --popover-foreground: 210 30% 90%;
+
+    --primary: 210 70% 60%; /* Brighter blue for dark mode */
+    --primary-foreground: 210 25% 15%; /* Very dark for text on primary */
+
+    --secondary: 200 40% 30%; /* Dark, muted blue */
+    --secondary-foreground: 200 50% 80%; /* Lighter text for dark secondary */
+
+    --muted: 210 15% 20%; /* Dark cool gray */
+    --muted-foreground: 210 25% 70%; /* Muted light cool gray */
+
+    --accent: 170 70% 55%; /* Brighter teal for dark mode */
+    --accent-foreground: 170 25% 10%; /* Dark text on accent for dark mode */
+    
+    --destructive: 0 60% 50%; /* A slightly less intense red for dark mode */
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 210 15% 25%; /* Border matching muted dark tones */
+    --input: 210 15% 18%; /* Input background for dark mode */
+    --ring: 210 70% 60%; /* Ring color matching primary dark */
+    
+    /* Sidebar specific colors - dark */
+    --sidebar-background: 210 15% 8%; /* Even darker for sidebar */
+    --sidebar-foreground: 210 30% 85%;
+    --sidebar-primary: 210 70% 60%;
+    --sidebar-primary-foreground: 210 25% 15%;
+    --sidebar-accent: 170 70% 55%;
+    --sidebar-accent-foreground: 170 25% 10%;
+    --sidebar-border: 210 15% 22%;
+    --sidebar-ring: 210 70% 60%;
+
+    /* Chart colors - dark theme adjustments */
+    --chart-1: 210 70% 60%;   /* primary dark */
+    --chart-2: 170 70% 55%;   /* accent dark */
+    --chart-3: 200 50% 75%;   /* brighter lighter blue */
+    --chart-4: 210 10% 50%;   /* medium cool gray (same as light, or slightly lighter if needed) */
+    --chart-5: 210 60% 45%;   /* darker, desaturated blue (adjusted for dark) */
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground transition-colors duration-300;
+  }
+}

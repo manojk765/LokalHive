@@ -1,0 +1,44 @@
+# Node modules
+node_modules/
+
+# Build output
+.next/
+out/
+dist/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Env files
+.env
+.env.*
+
+# Editor directories and files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Firebase emulators and local data
+firebase-debug.log
+.firebaserc
+.firebase/
+
+# Misc
+coverage/
+*.local
+
+# Optional: lock files (uncomment if you want to ignore lock files)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml 
