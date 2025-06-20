@@ -273,19 +273,21 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-var(--header-height,10rem))] md:h-[calc(100vh-var(--header-height,6rem))] container mx-auto">
-       <CardHeader className="flex flex-row items-center gap-3 p-4 border-b bg-card sticky top-0 z-10">
-         <Button onClick={() => router.push('/chat')} variant="ghost" size="icon" className="mr-2">
+    <div className="flex flex-col h-[100dvh] bg-muted/30">
+      <div className="sticky top-0 z-20 bg-card/95 border-b border-border/40 shadow-sm">
+        <CardHeader className="flex flex-row items-center gap-3 p-4">
+          <Button onClick={() => router.push('/chat')} variant="ghost" size="icon" className="mr-2">
             <ArrowLeft className="h-5 w-5" />
-         </Button>
-        <Avatar>
-          <AvatarImage src={otherParticipant?.avatarUrl} data-ai-hint="person avatar"/>
-          <AvatarFallback>{otherParticipant?.name?.substring(0,2).toUpperCase() || "??"}</AvatarFallback>
-        </Avatar>
-        <div className="text-lg font-semibold">{otherParticipant?.name || "Chat"}</div>
-      </CardHeader>
-      
-      <ScrollArea className="flex-1 p-4 space-y-4 bg-muted/20">
+          </Button>
+          <Avatar className="h-10 w-10 border border-border/40">
+            <AvatarImage src={otherParticipant?.avatarUrl} data-ai-hint="person avatar"/>
+            <AvatarFallback>{otherParticipant?.name?.substring(0,2).toUpperCase() || "??"}</AvatarFallback>
+          </Avatar>
+          <div className="text-lg font-semibold truncate">{otherParticipant?.name || "Chat"}</div>
+        </CardHeader>
+      </div>
+
+      <ScrollArea className="flex-1 px-2 py-4 md:px-8 md:py-6 space-y-4 bg-muted/30">
         {messages.map((msg) => (
           <div
             key={msg.id}
@@ -295,20 +297,20 @@ export default function ChatPage() {
             )}
           >
             {msg.senderId !== user.id && chatThread.participantsInfo && chatThread.participantsInfo[msg.senderId] && (
-               <Avatar className="h-8 w-8">
-                  <AvatarImage src={chatThread.participantsInfo[msg.senderId]?.avatarUrl} data-ai-hint="person avatar"/>
-                  <AvatarFallback>{chatThread.participantsInfo[msg.senderId]?.name.substring(0,2).toUpperCase() || "??"}</AvatarFallback>
+              <Avatar className="h-8 w-8 border border-border/40">
+                <AvatarImage src={chatThread.participantsInfo[msg.senderId]?.avatarUrl} data-ai-hint="person avatar"/>
+                <AvatarFallback>{chatThread.participantsInfo[msg.senderId]?.name.substring(0,2).toUpperCase() || "??"}</AvatarFallback>
               </Avatar>
             )}
             <div
               className={cn(
-                "p-3 rounded-lg shadow",
+                "p-3 rounded-2xl shadow-sm",
                 msg.senderId === user.id
-                  ? "bg-primary text-primary-foreground rounded-br-none"
-                  : "bg-card text-card-foreground rounded-bl-none"
+                  ? "bg-primary text-primary-foreground rounded-br-md"
+                  : "bg-card text-card-foreground border border-border/30 rounded-bl-md"
               )}
             >
-              <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
+              <p className="text-sm whitespace-pre-wrap break-words max-w-xs md:max-w-md">{msg.text}</p>
               <p className="text-xs mt-1 opacity-70 text-right">
                 {msg.timestamp instanceof Timestamp ? msg.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Sending...'}
               </p>
@@ -318,7 +320,7 @@ export default function ChatPage() {
         <div ref={messagesEndRef} />
       </ScrollArea>
 
-      <div className="p-4 border-t bg-card sticky bottom-0 z-10">
+      <div className="p-4 border-t bg-card/95 sticky bottom-0 z-20 shadow-inner">
         <form onSubmit={handleSendMessage} className="flex w-full items-center gap-2">
           <Input
             type="text"
@@ -327,9 +329,9 @@ export default function ChatPage() {
             onChange={(e) => setNewMessage(e.target.value)}
             className="flex-1"
             autoComplete="off"
-            disabled={isSending || !chatThread} // Also disable if chatThread is null
+            disabled={isSending || !chatThread}
           />
-          <Button type="submit" size="icon" disabled={!newMessage.trim() || isSending || !chatThread}>
+          <Button type="submit" size="icon" disabled={!newMessage.trim() || isSending || !chatThread} className="transition-colors">
             {isSending ? <Loader2 className="h-5 w-5 animate-spin"/> : <Send className="h-5 w-5" />}
             <span className="sr-only">Send</span>
           </Button>

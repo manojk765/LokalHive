@@ -83,7 +83,7 @@ async function fetchActiveSessionsFromFirestore(): Promise<PromptInput['availabl
     const querySnapshot = await getDocs(sessionsQuery);
     const sessions: PromptInput['availableSessions'] = [];
     querySnapshot.forEach((doc) => {
-      const data = doc.data() as SessionDocument;
+      const data = doc.data() as SessionDocument; 
       const sessionDateTime = data.dateTime instanceof Timestamp ? data.dateTime.toDate() : new Date(data.dateTime as any || Date.now());
       
       sessions.push({

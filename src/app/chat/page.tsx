@@ -119,61 +119,66 @@ export default function ChatListPage() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-primary">My Chats</h1>
-        <p className="text-muted-foreground">Connect with teachers and learners.</p>
-      </header>
+    <div className="min-h-screen bg-muted/30 flex flex-col items-center justify-start py-10">
+      <div className="w-full max-w-xl">
+        <header className="mb-8 text-center">
+          <h1 className="text-3xl font-bold tracking-tight text-primary">My Chats</h1>
+          <p className="text-muted-foreground">Connect with teachers and learners.</p>
+        </header>
 
-      {chatThreads.length > 0 ? (
-        <div className="space-y-4">
-          {chatThreads.map(thread => {
-            const otherParticipantId = thread.participantIds.find(id => id !== user?.id);
-            const otherParticipant = otherParticipantId && thread.participantsInfo ? thread.participantsInfo[otherParticipantId] : { name: "User", avatarUrl: "" }; // Added null check for thread.participantsInfo
-            const lastMsgTimestamp = thread.lastMessageTimestamp instanceof Timestamp ? thread.lastMessageTimestamp.toDate() : null;
-            
-            return (
-              <Link key={thread.id} href={`/chat/${thread.id}`} passHref>
-                <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                  <CardContent className="p-4 flex items-center gap-4">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={otherParticipant?.avatarUrl || undefined} alt={otherParticipant?.name || "User"} data-ai-hint="person avatar"/>
-                      <AvatarFallback>{otherParticipant?.name?.substring(0,2).toUpperCase() || '??'}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <p className="font-semibold">{otherParticipant?.name || "Chat User"}</p>
-                      <p className="text-sm text-muted-foreground truncate">
-                        {thread.lastMessageSenderId === user?.id ? "You: " : ""}
-                        {thread.lastMessageText || "No messages yet."}
-                      </p>
-                    </div>
-                    <div className="text-xs text-muted-foreground text-right">
-                      {lastMsgTimestamp && lastMsgTimestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                      <br/>
-                      {lastMsgTimestamp && lastMsgTimestamp.toLocaleDateString([], {month:'short', day:'numeric'})}
-                      {/* Placeholder for unread count */}
-                      {/* {thread.unreadCount && thread.unreadCount[user?.id || ''] > 0 && (
-                        <span className="ml-2 mt-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">
-                          {thread.unreadCount[user?.id || '']}
-                        </span>
-                      )} */}
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            );
-          })}
-        </div>
-      ) : (
-        <Card>
-          <CardContent className="p-6 text-center">
-             <MessageSquare className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">You have no active chats yet.</p>
-            <p className="text-sm text-muted-foreground">Start a conversation by contacting a teacher about a session.</p>
-            <Button variant="link" asChild className="mt-2"><Link href="/">Discover Sessions</Link></Button>
-          </CardContent>
-        </Card>
-      )}
+        {chatThreads.length > 0 ? (
+          <div className="space-y-2">
+            {chatThreads.map((thread, idx) => {
+              const otherParticipantId = thread.participantIds.find(id => id !== user?.id);
+              const otherParticipant = otherParticipantId && thread.participantsInfo ? thread.participantsInfo[otherParticipantId] : { name: "User", avatarUrl: "" };
+              const lastMsgTimestamp = thread.lastMessageTimestamp instanceof Timestamp ? thread.lastMessageTimestamp.toDate() : null;
+              return (
+                <React.Fragment key={thread.id}>
+                  <Link href={`/chat/${thread.id}`} passHref legacyBehavior>
+                    <a className="block">
+                      <Card className="hover:shadow-lg transition-shadow cursor-pointer border border-border/60">
+                        <CardContent className="p-4 flex items-center gap-4">
+                          <Avatar className="h-14 w-14 border border-border/40">
+                            <AvatarImage src={otherParticipant?.avatarUrl || undefined} alt={otherParticipant?.name || "User"} data-ai-hint="person avatar"/>
+                            <AvatarFallback>{otherParticipant?.name?.substring(0,2).toUpperCase() || '??'}</AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-lg truncate">{otherParticipant?.name || "Chat User"}</p>
+                            <p className="text-sm text-muted-foreground truncate">
+                              {thread.lastMessageSenderId === user?.id ? "You: " : ""}
+                              {thread.lastMessageText || "No messages yet."}
+                            </p>
+                          </div>
+                          <div className="text-xs text-muted-foreground text-right min-w-[60px]">
+                            {lastMsgTimestamp && lastMsgTimestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                            <br/>
+                            {lastMsgTimestamp && lastMsgTimestamp.toLocaleDateString([], {month:'short', day:'numeric'})}
+                            {/* Placeholder for unread count */}
+                            {/* <span className="ml-2 mt-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-primary rounded-full">
+                              2
+                            </span> */}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </a>
+                  </Link>
+                  {idx < chatThreads.length - 1 && <div className="border-b border-border/30 mx-4" />}
+                </React.Fragment>
+              );
+            })}
+          </div>
+        ) : (
+          <Card className="mt-16 shadow-none border border-border/40">
+            <CardContent className="p-8 text-center flex flex-col items-center">
+              <MessageSquare className="w-16 h-16 text-muted-foreground mb-4" />
+              <h2 className="text-xl font-semibold mb-2">No Active Chats</h2>
+              <p className="text-muted-foreground mb-2">You have no active chats yet.</p>
+              <p className="text-sm text-muted-foreground mb-4">Start a conversation by contacting a teacher about a session.</p>
+              <Button variant="link" asChild className="mt-2"><Link href="/">Discover Sessions</Link></Button>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }

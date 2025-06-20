@@ -6,7 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "next-themes";
 
 export const metadata: Metadata = {
-  title: 'Local Hive - Connect & Learn Locally',
+  title: 'LokalHive - Connect & Learn Locally',
   description: 'Discover and share skills in your community.',
 };
 
