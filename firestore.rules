@@ -1,0 +1,59 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users collection:
+    match /users/{userId} {
+      allow read: if request.auth != null; 
+      allow create, update, delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Sessions collection:
+    match /sessions/{sessionId} {
+      allow read: if true; 
+      allow create: if request.auth != null && request.resource.data.teacherId == request.auth.uid;
+      allow update, delete: if request.auth != null && get(/databases/$(database)/documents/sessions/$(sessionId)).data.teacherId == request.auth.uid;
+    }
+
+    // BookingRequests collection (UPDATED READ RULE):
+    match /bookingRequests/{bookingId} {
+      allow create: if request.auth != null && request.resource.data.learnerId == request.auth.uid;
+      
+      // Allow read if:
+      // 1. The requester is the learner associated with this booking.
+      // OR
+      // 2. The requester is the teacherId stored on this booking request.
+      // OR (optional, more complex, if teacherId isn't on booking)
+      // 3. The requester is the teacher of the session this booking belongs to.
+      allow read: if request.auth != null && 
+                    (request.auth.uid == resource.data.learnerId || 
+                     request.auth.uid == resource.data.teacherId); // Direct check on booking's teacherId
+      allow list: if request.auth != null && 
+                    exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+                    get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher';
+      allow update: if request.auth != null && 
+                     request.auth.uid == resource.data.teacherId; // Teacher can update status (simpler rule)
+                     // OR use the session-based check if teacherId isn't always on bookingRequest:
+                     // request.auth.uid == get(/databases/$(database)/documents/sessions/$(resource.data.sessionId)).data.teacherId;
+    }
+
+    // ChatThreads & Messages rules - UPDATED FOR BETTER COMPATIBILITY
+    match /chatThreads/{threadId} {
+      allow read: if request.auth != null && request.auth.uid in resource.data.participantIds;
+      allow create: if request.auth != null && 
+                      request.auth.uid in request.resource.data.participantIds &&
+                      request.resource.data.participantIds.size() == 2; // Ensure exactly 2 participants
+      allow update: if request.auth != null && request.auth.uid in resource.data.participantIds;
+      allow delete: if false;
+    }
+    match /chatThreads/{threadId}/messages/{messageId} {
+      allow get, list: if request.auth != null && 
+                        request.auth.uid in get(/databases/$(database)/documents/chatThreads/$(threadId)).data.participantIds;
+      allow create: if request.auth != null && 
+                      request.resource.data.senderId == request.auth.uid &&
+                      request.auth.uid in get(/databases/$(database)/documents/chatThreads/$(threadId)).data.participantIds;
+      allow update: if false; 
+      allow delete: if false; 
+    }
+  }
+} 

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useRouter } from 'next/navigation';
@@ -44,6 +43,7 @@ export default function EditProfilePage() {
   
   const [currentSkill, setCurrentSkill] = useState("");
   const [skillsList, setSkillsList] = useState<string[]>([]);
+  const [originalSkillsList, setOriginalSkillsList] = useState<string[]>([]);
   const [profilePictureFile, setProfilePictureFile] = useState<File | null>(null);
   const [profilePicturePreview, setProfilePicturePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -72,11 +72,18 @@ export default function EditProfilePage() {
         preferences: user.preferences || "",
         experience: (user.role === 'teacher' ? user.experience : "") || "",
       });
-      setSkillsList(user.skills || []);
+      const userSkills = user.skills || [];
+      setSkillsList(userSkills);
+      setOriginalSkillsList(userSkills);
       setProfilePicturePreview(user.profilePictureUrl || `https://placehold.co/100x100.png?text=${(user.name || 'LH').substring(0,2)}`);
     }
   }, [user, reset]);
 
+  // Check if skills have changed
+  const skillsChanged = JSON.stringify(skillsList) !== JSON.stringify(originalSkillsList);
+  
+  // Check if any changes have been made
+  const hasChanges = isDirty || skillsChanged || profilePictureFile;
 
   if (authLoading) {
      return <div className="flex h-screen items-center justify-center"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
@@ -128,6 +135,16 @@ export default function EditProfilePage() {
       return;
     }
 
+    if (!storage) {
+      toast({ title: "Error", description: "Storage is not initialized.", variant: "destructive"});
+      return;
+    }
+
+    if (!db) {
+      toast({ title: "Error", description: "Database is not initialized.", variant: "destructive"});
+      return;
+    }
+
     setIsUploading(true); 
 
     let newProfilePictureUrl = user.profilePictureUrl;
@@ -137,7 +154,7 @@ export default function EditProfilePage() {
         const storageRef = ref(storage, `profile_pictures/${firebaseUser.uid}/${profilePictureFile.name}`);
         const snapshot = await uploadBytes(storageRef, profilePictureFile);
         newProfilePictureUrl = await getDownloadURL(snapshot.ref);
-        toast({ title: "Profile Picture Uploaded!", icon: <Check className="h-5 w-5 text-green-500" />});
+        toast({ title: "Profile Picture Uploaded!" });
       } catch (error: any) {
         console.error("Profile picture upload error:", error);
         toast({ title: "Upload Failed", description: "Could not upload profile picture. "+ error.message, variant: "destructive"});
@@ -171,7 +188,7 @@ export default function EditProfilePage() {
       
       updateUserProfileInContext(sanitizedProfileData as Partial<UserProfile>);
       
-      toast({ title: "Profile Updated!", description: "Your profile has been successfully updated.", icon: <Check className="h-5 w-5 text-green-500" /> });
+      toast({ title: "Profile Updated!", description: "Your profile has been successfully updated." });
       router.push('/profile');
     } catch (error: any) {
       console.error("Profile update error:", error);
@@ -293,7 +310,7 @@ export default function EditProfilePage() {
 
           </CardContent>
           <CardFooter className="p-6 bg-muted/30 border-t">
-            <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting || isUploading || (!isDirty && !profilePictureFile) }>
+            <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting || isUploading || (!hasChanges) }>
               {(isSubmitting || isUploading) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
               Save Changes
             </Button>

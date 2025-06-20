@@ -16,6 +16,7 @@ import { db } from '@/lib/firebase';
 import { doc, getDoc, addDoc, collection, serverTimestamp, Timestamp, query, where, getDocs, setDoc, updateDoc } from 'firebase/firestore';
 import SessionMap from '@/components/maps/SessionMap';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { auth } from '@/lib/firebase';
 
 export default function SessionDetailPage() {
   const params = useParams();
@@ -276,28 +277,104 @@ export default function SessionDetailPage() {
       toast({ title: "Database Error", description: "Firestore is not initialized.", variant: "destructive" });
       return;
     }
-    const participantIds = [user.id, session.teacherId].sort();
+    
+    // Debug logging
+    console.log("=== CHAT DEBUG INFO ===");
+    console.log("User object:", user);
+    console.log("User ID:", user.id);
+    console.log("Session teacher ID:", session.teacherId);
+    console.log("Teacher object:", teacher);
+    console.log("Is authenticated:", isAuthenticated);
+    console.log("Firebase auth current user:", auth?.currentUser);
+    console.log("Firebase auth UID:", auth?.currentUser?.uid);
+    
+    // Ensure we have valid IDs
+    const learnerId = user.id;
+    const teacherId = session.teacherId;
+    
+    if (!learnerId || !teacherId) {
+      toast({ title: "Error", description: "Invalid user or teacher ID for chat.", variant: "destructive" });
+      return;
+    }
+    
+    const participantIds = [learnerId, teacherId].sort();
     const chatId = participantIds.join('_');
+    
+    console.log("Learner ID:", learnerId);
+    console.log("Teacher ID:", teacherId);
+    console.log("Participant IDs:", participantIds);
+    console.log("Chat ID:", chatId);
+    
     try {
-        const chatThreadRef = doc(db, "chatThreads", chatId);
-        const chatThreadSnap = await getDoc(chatThreadRef);
-        if (!chatThreadSnap.exists()) {
-            const now = serverTimestamp();
-            const teacherForChatInfo = teacher && teacher.id === session.teacherId ? teacher : {name: session.teacherName, profilePictureUrl: session.teacherProfilePictureUrl};
-            const newThreadData = {
-                participantIds: participantIds,
-                participantsInfo: {
-                    [user.id]: { name: user.name || "User", avatarUrl: user.profilePictureUrl || "" },
-                    [session.teacherId]: { name: teacherForChatInfo.name || "Teacher", avatarUrl: teacherForChatInfo.profilePictureUrl || "" }
-                },
-                createdAt: now, updatedAt: now, lastMessageText: "", lastMessageSenderId: "",
-            };
-            await setDoc(chatThreadRef, newThreadData);
-            toast({ title: "Chat Started!", description: `You can now chat with ${newThreadData.participantsInfo[session.teacherId].name || 'the teacher'}.`});
+        // First, check if a chat thread already exists
+        const existingChatsQuery = query(
+          collection(db, "chatThreads"),
+          where("participantIds", "array-contains", learnerId)
+        );
+        const existingChatsSnapshot = await getDocs(existingChatsQuery);
+        
+        let existingChatId = null;
+        existingChatsSnapshot.forEach((doc) => {
+          const data = doc.data();
+          if (data.participantIds && data.participantIds.includes(teacherId)) {
+            existingChatId = doc.id;
+          }
+        });
+        
+        if (existingChatId) {
+          console.log("Chat thread already exists:", existingChatId);
+          router.push(`/chat/${existingChatId}`);
+          return;
         }
-        router.push(`/chat/${chatId}`);
-    } catch (error:any) {
-        toast({ title: "Chat Error", description: `Could not initiate chat: ${error.message}.`, variant: "destructive"});
+        
+        // Create new chat thread using addDoc (auto-generated ID)
+        const now = serverTimestamp();
+        const teacherForChatInfo = teacher && teacher.id === session.teacherId ? teacher : {name: session.teacherName, profilePictureUrl: session.teacherProfilePictureUrl};
+        
+        const newThreadData = {
+            participantIds: participantIds,
+            participantsInfo: {
+                [learnerId]: { 
+                    name: user.name || "User", 
+                    avatarUrl: user.profilePictureUrl || "" 
+                },
+                [teacherId]: { 
+                    name: teacherForChatInfo.name || "Teacher", 
+                    avatarUrl: teacherForChatInfo.profilePictureUrl || "" 
+                }
+            },
+            createdAt: now, 
+            updatedAt: now, 
+            lastMessageText: "", 
+            lastMessageSenderId: "",
+        };
+        
+        console.log("Creating chat thread with data:", newThreadData);
+        console.log("Checking if current user ID is in participantIds:", participantIds.includes(auth?.currentUser?.uid || ""));
+        console.log("Current Firebase auth UID:", auth?.currentUser?.uid);
+        console.log("Participant IDs array:", participantIds);
+        
+        const docRef = await addDoc(collection(db, "chatThreads"), newThreadData);
+        console.log("Chat thread created with ID:", docRef.id);
+        
+        toast({ title: "Chat Started!", description: `You can now chat with ${newThreadData.participantsInfo[teacherId].name || 'the teacher'}.`});
+        router.push(`/chat/${docRef.id}`);
+        
+    } catch (error: any) {
+        console.error("Chat creation error:", error);
+        console.error("Error code:", error.code);
+        console.error("Error message:", error.message);
+        console.error("Full error object:", error);
+        
+        let errorMessage = "Could not initiate chat.";
+        
+        if (error.code === 'permission-denied') {
+            errorMessage = "Permission denied. Please check if you're logged in and try again.";
+        } else if (error.message) {
+            errorMessage = `Could not initiate chat: ${error.message}`;
+        }
+        
+        toast({ title: "Chat Error", description: errorMessage, variant: "destructive"});
     }
   }
 
@@ -367,17 +444,23 @@ export default function SessionDetailPage() {
               </div>
             </CardContent>
              <CardFooter className="p-6 bg-muted/30 border-t flex flex-col sm:flex-row items-center justify-between gap-4">
-              {(!user || user.id !== session.teacherId) && (
-                <>
-                  <Button size="lg" onClick={handleBookingRequest} className="w-full sm:w-auto"
-                    disabled={!isAuthenticated || isBookingLoading || isSessionFull || (!!existingBookingStatus && existingBookingStatus !== 'rejected' && existingBookingStatus !== 'cancelled_by_learner' && existingBookingStatus !== 'cancelled_by_teacher')}>
-                    {isBookingLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Send className="mr-2 h-5 w-5" />}
-                    {isSessionFull ? "Session Full" : (existingBookingStatus && existingBookingStatus !== 'rejected' && existingBookingStatus !== 'cancelled_by_learner' && existingBookingStatus !== 'cancelled_by_teacher' ? `Request ${existingBookingStatus}` : 'Request to Book')}
-                  </Button>
-                  <Button size="lg" variant="outline" onClick={handleChatRequest} className="w-full sm:w-auto" disabled={!isAuthenticated || !teacher || !teacher.id || teacher.id === "unknown_teacher" || session.teacherId === "unknown_teacher"}> 
-                    <MessageSquare className="mr-2 h-5 w-5" /> Chat with Teacher
-                  </Button>
-                </>
+              {!isAuthenticated ? (
+                <Button size="lg" className="w-full sm:w-auto" onClick={() => router.push(`/auth?redirect=/sessions/${id}`)}>
+                  Log in to view more details
+                </Button>
+              ) : (
+                (!user || user.id !== session.teacherId) && (
+                  <>
+                    <Button size="lg" onClick={handleBookingRequest} className="w-full sm:w-auto"
+                      disabled={isBookingLoading || isSessionFull || (!!existingBookingStatus && existingBookingStatus !== 'rejected' && existingBookingStatus !== 'cancelled_by_learner' && existingBookingStatus !== 'cancelled_by_teacher')}>
+                      {isBookingLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Send className="mr-2 h-5 w-5" />}
+                      {isSessionFull ? "Session Full" : (existingBookingStatus && existingBookingStatus !== 'rejected' && existingBookingStatus !== 'cancelled_by_learner' && existingBookingStatus !== 'cancelled_by_teacher' ? `Request ${existingBookingStatus}` : 'Request to Book')}
+                    </Button>
+                    <Button size="lg" variant="outline" onClick={handleChatRequest} className="w-full sm:w-auto" disabled={!teacher || !teacher.id || teacher.id === "unknown_teacher" || session.teacherId === "unknown_teacher"}> 
+                      <MessageSquare className="mr-2 h-5 w-5" /> Chat with Teacher
+                    </Button>
+                  </>
+                )
               )}
               {user?.id === session.teacherId && (
                  <Button size="lg" variant="outline" asChild className="w-full sm:w-auto">
@@ -395,8 +478,11 @@ export default function SessionDetailPage() {
                   {confirmedAttendees.map(attendee => (
                     <li key={attendee.id} className="flex items-center gap-3 p-2 border rounded-md bg-background hover:bg-muted/50">
                       <Avatar className="h-10 w-10"><AvatarFallback>{(attendee.learnerName || "L")?.[0].toUpperCase()}</AvatarFallback></Avatar>
-                      <div><p className="font-medium text-foreground">{attendee.learnerName || "Unknown Learner"}</p>
-                          <p className="text-xs text-muted-foreground">Requested: {attendee.requestedAt ? new Date(attendee.requestedAt as any).toLocaleDateString() : "N/A"}</p></div>
+                      <div>
+                        <p className="font-medium text-foreground">{attendee.learnerName || "Unknown Learner"}</p>
+                        <p className="text-xs text-muted-foreground">Requested: {attendee.requestedAt ? new Date(attendee.requestedAt as any).toLocaleDateString() : "N/A"}</p>
+                        <p className="text-xs text-muted-foreground">Confirmed: {attendee.updatedAt ? new Date(attendee.updatedAt as any).toLocaleDateString() : "N/A"}</p>
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -410,25 +496,43 @@ export default function SessionDetailPage() {
         </div>
 
         <div className="md:col-span-1 space-y-6">
-           {teacher && teacher.id !== "unknown_teacher" ? (
+           {!isAuthenticated ? (
             <Card className="shadow-lg">
               <CardHeader className="flex flex-row items-center gap-4 p-4 bg-secondary/20">
                 <Avatar className="h-16 w-16 border-2 border-primary">
-                  <AvatarImage src={teacher.profilePictureUrl || undefined} alt={teacher.name || "Teacher"} data-ai-hint="person teacher" />
-                  <AvatarFallback>{(teacher.name || session.teacherName || "T")?.substring(0, 2).toUpperCase()}</AvatarFallback>
+                  <AvatarFallback>?</AvatarFallback>
                 </Avatar>
-                <div><CardTitle className="text-xl">{teacher.name || session.teacherName || "Teacher N/A"}</CardTitle><CardDescription className="text-sm">Teacher</CardDescription></div>
+                <div>
+                  <CardTitle className="text-xl">Log in to view teacher details</CardTitle>
+                  <CardDescription className="text-sm">Sign in to see more about the teacher and session.</CardDescription>
+                </div>
               </CardHeader>
-              <CardContent className="p-4"><p className="text-sm text-muted-foreground mb-3">{teacher.bio || "No bio available."}</p>
-                {teacher.skills && teacher.skills.length > 0 && (<>
-                    <h4 className="font-semibold text-sm mb-1">Skills:</h4>
-                    <div className="flex flex-wrap gap-1">{teacher.skills.map(skill => <Badge key={skill} variant="outline">{skill}</Badge>)}</div></>)}
+              <CardContent className="p-4">
+                <Button onClick={() => router.push(`/auth?redirect=/sessions/${id}`)} className="w-full">Log in</Button>
               </CardContent>
             </Card>
-          ) : ( <Card className="shadow-lg"><CardHeader className="flex flex-row items-center gap-4 p-4 bg-secondary/20">
-                    <Avatar className="h-16 w-16 border-2 border-primary"><AvatarFallback>{(session.teacherName || "T")?.substring(0, 2).toUpperCase()}</AvatarFallback></Avatar>
-                    <div><CardTitle className="text-xl">{session.teacherName || "Teacher N/A"}</CardTitle><CardDescription className="text-sm">Teacher</CardDescription></div></CardHeader>
-                <CardContent className="p-4"><p className="text-sm text-muted-foreground mb-3">Teacher profile not loaded.</p></CardContent></Card>
+          ) : (
+            teacher && teacher.id !== "unknown_teacher" ? (
+              <Card className="shadow-lg">
+                <CardHeader className="flex flex-row items-center gap-4 p-4 bg-secondary/20">
+                  <Avatar className="h-16 w-16 border-2 border-primary">
+                    <AvatarImage src={teacher.profilePictureUrl || undefined} alt={teacher.name || "Teacher"} data-ai-hint="person teacher" />
+                    <AvatarFallback>{(teacher.name || session.teacherName || "T")?.substring(0, 2).toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                  <div><CardTitle className="text-xl">{teacher.name || session.teacherName || "Teacher N/A"}</CardTitle><CardDescription className="text-sm">Teacher</CardDescription></div>
+                </CardHeader>
+                <CardContent className="p-4"><p className="text-sm text-muted-foreground mb-3">{teacher.bio || "No bio available."}</p>
+                  {teacher.skills && teacher.skills.length > 0 && (<>
+                      <h4 className="font-semibold text-sm mb-1">Skills:</h4>
+                      <div className="flex flex-wrap gap-1">{teacher.skills.map(skill => <Badge key={skill} variant="outline">{skill}</Badge>)}</div></>)}
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="shadow-lg"><CardHeader className="flex flex-row items-center gap-4 p-4 bg-secondary/20">
+                        <Avatar className="h-16 w-16 border-2 border-primary"><AvatarFallback>{(session.teacherName || "T")?.substring(0, 2).toUpperCase()}</AvatarFallback></Avatar>
+                        <div><CardTitle className="text-xl">{session.teacherName || "Teacher N/A"}</CardTitle><CardDescription className="text-sm">Teacher</CardDescription></div></CardHeader>
+                    <CardContent className="p-4"><p className="text-sm text-muted-foreground mb-3">Teacher profile not loaded.</p></CardContent></Card>
+            )
           )}
            <Card className="shadow-lg">
             <CardHeader><CardTitle>Location Details</CardTitle></CardHeader>

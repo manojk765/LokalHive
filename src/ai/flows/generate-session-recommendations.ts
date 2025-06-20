@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -71,6 +70,9 @@ export async function generateSessionRecommendations(input: SessionRecommendatio
 
 // Helper function to fetch sessions from Firestore
 async function fetchActiveSessionsFromFirestore(): Promise<PromptInput['availableSessions']> {
+  if (!db) {
+    throw new Error("Firestore DB instance is not initialized.");
+  }
   try {
     const sessionsQuery = query(
       collection(db, "sessions"),
@@ -139,7 +141,21 @@ If no sessions from the list are a good match, or if the list is empty, state th
 Do not invent sessions or session IDs.
 
 Return the recommendations in the following JSON format:
-{{jsonSchema outputSchema}}
+{
+  "recommendations": [
+    {
+      "sessionId": "string",
+      "title": "string",
+      "description": "string",
+      "category": "string",
+      "teacher": "string",
+      "location": "string",
+      "dateTime": "string",
+      "price": number
+    }
+  ],
+  "reasoning": "string (optional)"
+}
   `,
 });
 

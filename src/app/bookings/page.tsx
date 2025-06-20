@@ -16,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 
 interface EnrichedBooking extends BookingRequest {
   sessionDetails?: Partial<Session>; // Make sessionDetails optional as it's fetched
+  sessionDeleted?: boolean; // Add flag to track if session was deleted
 }
 
 export default function MyBookingsPage() {
@@ -44,6 +45,7 @@ export default function MyBookingsPage() {
       const bookingsPromises = querySnapshot.docs.map(async (docSnapshot) => {
         const bookingData = docSnapshot.data(); // No 'as BookingRequest' yet
         let sessionDetails: Partial<Session> | undefined;
+        let sessionDeleted = false;
 
         if (bookingData.sessionId) {
           if (!db) return { id: docSnapshot.id } as EnrichedBooking; // Extra guard for type safety
@@ -58,7 +60,11 @@ export default function MyBookingsPage() {
               location: sessionData.location || "Location TBD",
               coverImageUrl: sessionData.coverImageUrl,
               category: sessionData.category || "Uncategorized",
+              status: sessionData.status,
             };
+          } else {
+            // Session was deleted by the teacher
+            sessionDeleted = true;
           }
         }
         return { 
@@ -69,7 +75,8 @@ export default function MyBookingsPage() {
           teacherId: bookingData.teacherId || "unknown_teacher_id",
           status: bookingData.status || "pending",
           requestedAt: (bookingData.requestedAt as Timestamp) || Timestamp.now(), // Fallback
-          sessionDetails 
+          sessionDetails,
+          sessionDeleted
         } as EnrichedBooking;
       });
 
@@ -160,32 +167,53 @@ export default function MyBookingsPage() {
                     <CardDescription className="text-sm text-muted-foreground">
                        Requested on: {booking.requestedAt instanceof Timestamp ? booking.requestedAt.toDate().toLocaleDateString() : (booking.requestedAt ? new Date(booking.requestedAt as any).toLocaleDateString() : 'N/A')}
                     </CardDescription>
+                    {/* Session status message */}
+                    {!booking.sessionDeleted && booking.sessionDetails?.status && (
+                      booking.sessionDetails.status === 'cancelled' ? (
+                        <div className="mt-2 p-2 rounded bg-destructive/10 text-destructive text-sm font-medium">This session has been cancelled by the teacher.</div>
+                      ) : booking.sessionDetails.status === 'completed' ? (
+                        <div className="mt-2 p-2 rounded bg-muted text-muted-foreground text-sm font-medium">This session has been completed.</div>
+                      ) : booking.sessionDetails.status === 'confirmed' ? (
+                        <div className="mt-2 p-2 rounded bg-green-100 text-green-800 text-sm font-medium">This session is confirmed and upcoming.</div>
+                      ) : null
+                    )}
                   </CardHeader>
                   <CardContent className="p-4 text-sm space-y-1">
-                    {booking.sessionDetails?.dateTime && (
-                      <p><strong>Date & Time:</strong> {
-                        (() => {
-                          const dt = booking.sessionDetails?.dateTime;
-                          let dateObj: Date;
-                          if (typeof dt === "string" || dt instanceof Date) {
-                            dateObj = new Date(dt);
-                          } else if (typeof dt === "object" && dt !== null && "toDate" in dt) {
-                            dateObj = dt.toDate();
-                          } else {
-                            dateObj = new Date();
-                          }
-                          return dateObj.toLocaleString();
-                        })()
-                      }</p>
+                    {booking.sessionDeleted ? (
+                      <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3">
+                        <p className="text-destructive font-medium">⚠️ Session Deleted</p>
+                        <p className="text-destructive/80 text-xs">This session has been deleted by the instructor/teacher.</p>
+                      </div>
+                    ) : (
+                      <>
+                        {booking.sessionDetails?.dateTime && (
+                          <p><strong>Date & Time:</strong> {
+                            (() => {
+                              const dt = booking.sessionDetails?.dateTime;
+                              let dateObj: Date;
+                              if (typeof dt === "string" || dt instanceof Date) {
+                                dateObj = new Date(dt);
+                              } else if (typeof dt === "object" && dt !== null && "toDate" in dt) {
+                                dateObj = dt.toDate();
+                              } else {
+                                dateObj = new Date();
+                              }
+                              return dateObj.toLocaleString();
+                            })()
+                          }</p>
+                        )}
+                        {booking.sessionDetails?.location && <p><strong>Location:</strong> {booking.sessionDetails.location}</p>}
+                        {booking.sessionDetails?.category && <p><strong>Category:</strong> {booking.sessionDetails.category}</p>}
+                        {!booking.sessionDetails && <p className="text-muted-foreground">Full session details might be loading or unavailable.</p>}
+                      </>
                     )}
-                    {booking.sessionDetails?.location && <p><strong>Location:</strong> {booking.sessionDetails.location}</p>}
-                    {booking.sessionDetails?.category && <p><strong>Category:</strong> {booking.sessionDetails.category}</p>}
-                    {!booking.sessionDetails && <p className="text-muted-foreground">Full session details might be loading or unavailable.</p>}
                   </CardContent>
                   <CardFooter className="p-4 border-t bg-muted/20">
-                     <Link href={`/sessions/${booking.sessionId}`} passHref legacyBehavior>
+                    {!booking.sessionDeleted && (
+                      <Link href={`/sessions/${booking.sessionId}`} passHref legacyBehavior>
                         <Button variant="outline" size="sm">View Session Details</Button>
-                     </Link>
+                      </Link>
+                    )}
                   </CardFooter>
                 </div>
               </div>

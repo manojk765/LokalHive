@@ -71,7 +71,7 @@ const SAMPLE_SESSIONS: Session[] = [
 
 interface FilterOptions {
   category: string;
-  priceRange: [number, number];
+  priceRange: [number, number]; // 0 to 1000
   date: Date | null;
   searchTerm?: string;
 }
@@ -138,9 +138,7 @@ export function DiscoverSessionsSection() {
       }
        if (filters.priceRange) {
         constraints.push(where("price", ">=", filters.priceRange[0]));
-        if (filters.priceRange[1] < 200) { 
-           constraints.push(where("price", "<=", filters.priceRange[1]));
-        }
+        constraints.push(where("price", "<=", filters.priceRange[1]));
       }
       
       constraints.push(orderBy("dateTime", "asc"));

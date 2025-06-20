@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview AI flow to generate suggestions for session titles and descriptions.
@@ -84,7 +83,6 @@ Ensure the tone of your suggestions matches the 'Desired Tone' (or default to fr
 If draft content is provided, try to improve upon it or offer alternatives rather than just repeating it.
 
 Return the output in the specified JSON format.
-{{jsonSchema outputSchema}}
 `,
 });
 

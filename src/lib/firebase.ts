@@ -1,74 +1,16 @@
-
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
-// import { getFunctions } from 'firebase/functions'; // Uncomment if used
-// import { getMessaging } from 'firebase/messaging'; // Uncomment if used
-
-// console.log(
-//   "Firebase Init: Checking NEXT_PUBLIC_FIREBASE_API_KEY directly. Value:",
-//   process.env.NEXT_PUBLIC_FIREBASE_API_KEY
-// );
-// console.log(
-//   "Firebase Init: Checking NEXT_PUBLIC_FIREBASE_PROJECT_ID directly. Value:",
-//   process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID
-// );
-
-
-// const requiredEnvVars = [
-//   "NEXT_PUBLIC_FIREBASE_API_KEY",
-//   "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN",
-//   "NEXT_PUBLIC_FIREBASE_PROJECT_ID",
-//   "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET",
-//   "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID",
-//   "NEXT_PUBLIC_FIREBASE_APP_ID",
-//   // "NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID", // Often optional
-// ];
-
-// let firebaseConfigIsValid = true;
-
-// console.log("Firebase Config Check: Starting environment variable validation...");
-
-// // Log all NEXT_PUBLIC_ variables available to the client-side bundle
-// const availableNextPublicEnvs: Record<string, string | undefined> = {};
-// for (const key in process.env) {
-//   if (key.startsWith("NEXT_PUBLIC_")) {
-//     availableNextPublicEnvs[key] = process.env[key];
-//   }
-// }
-// console.log("Firebase Config Check: Available NEXT_PUBLIC_ environment variables:", availableNextPublicEnvs);
-
-
-// requiredEnvVars.forEach(envVar => {
-//   if (!process.env[envVar]) {
-//     console.error(
-//       `CRITICAL Firebase Configuration Error: Missing ${envVar} in your .env file.\n` +
-//       `Please ensure this is correctly set up with values from your Firebase project console.\n` +
-//       `The app will likely not function correctly until this is provided.`
-//     );
-//     firebaseConfigIsValid = false;
-//   } else {
-//     // console.log(`Firebase Config: ${envVar} is present.`); // Optional: for verbose checking
-//   }
-// });
-
-// if (!firebaseConfigIsValid) {
-//   console.error(
-//     "CRITICAL: Firebase configuration is incomplete due to missing environment variables. " +
-//     "Please check your .env file in the project root and ensure all NEXT_PUBLIC_FIREBASE_... variables are correctly set. " +
-//     "Remember to RESTART your Next.js development server after making changes to the .env file."
-//   );
-// }
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBCaKxpplIteFEbD9MxSh9x1mSpQtW9Rv0",
-  authDomain: "lokalearn-460a1.firebaseapp.com",
-  projectId: "lokalearn-460a1",
-  storageBucket: "lokalearn-460a1.firebasestorage.app",
-  messagingSenderId: "986508240944",
-  appId: "1:986508240944:web:c19d2e1e64323f1de1e5f5",
-  measurementId: "G-C8N852QZ7Z"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "",
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "",
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "",
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "",
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "",
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "",
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || ""
 };
 
 // Initialize Firebase

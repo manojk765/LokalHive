@@ -78,7 +78,7 @@ export function SessionCard({ session }: SessionCardProps) {
       <CardFooter className="p-4 flex justify-between items-center border-t">
         <div className="flex items-center font-semibold text-primary text-lg gap-1">
           <span className="font-bold">₹</span>
-          <span>{displayPrice === 0 ? "Free" : displayPrice.toFixed(2)}</span>
+          <span>{displayPrice === 0 ? "Free" : displayPrice.toLocaleString("en-IN")}</span>
         </div>
         <Link href={`/sessions/${session.id}`} passHref legacyBehavior>
           <Button size="sm" variant="outline">View Details</Button>

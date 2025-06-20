@@ -62,6 +62,7 @@ import {
   Rss,
   Handshake,
   Bot, // Added Bot icon
+  User,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet"; // Added SheetHeader, SheetTitle
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -529,38 +530,63 @@ const UserDropdown = ({ user, logoutAction }: { user: UserProfile; logoutAction:
   );
 };
 
-const Footer = () => (
-  <footer className="py-8 px-4 md:px-6 border-t bg-card text-card-foreground">
-    <div className="container mx-auto">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-        <div>
-          <Logo />
-          <p className="text-sm text-muted-foreground mt-2">
-            Connecting skills, empowering communities.
-          </p>
+const Footer = () => {
+  const { isAuthenticated, user } = useAuth();
+  
+  return (
+    <footer className="py-8 px-4 md:px-6 border-t bg-card text-card-foreground">
+      <div className="container mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+          <div>
+            <Logo />
+            <p className="text-sm text-muted-foreground mt-2">
+              Connecting skills, empowering communities.
+            </p>
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold mb-3 text-foreground">Quick Links</h3>
+            <ul className="space-y-2 text-sm">
+              <li><Link href="/#discover-sessions" className="text-muted-foreground hover:text-primary">Discover Sessions</Link></li>
+              {!isAuthenticated ? (
+                <>
+                  <li><Link href="/auth?type=signup&role=teacher" className="text-muted-foreground hover:text-primary">Become a Teacher</Link></li>
+                  <li><Link href="/auth" className="text-muted-foreground hover:text-primary">Log In</Link></li>
+                  <li><Link href="/auth?type=signup" className="text-muted-foreground hover:text-primary">Sign Up</Link></li>
+                </>
+              ) : user?.role === 'learner' ? (
+                <>
+                  <li><Link href="/recommendations" className="text-muted-foreground hover:text-primary">AI Recommendations</Link></li>
+                  <li><Link href="/bookings" className="text-muted-foreground hover:text-primary">My Bookings</Link></li>
+                  <li><Link href="/chat" className="text-muted-foreground hover:text-primary">Chat</Link></li>
+                </>
+              ) : user?.role === 'teacher' ? (
+                <>
+                  <li><Link href="/teaching" className="text-muted-foreground hover:text-primary">My Teaching</Link></li>
+                  <li><Link href="/teaching/ai-assistant" className="text-muted-foreground hover:text-primary">AI Session Helper</Link></li>
+                  <li><Link href="/chat" className="text-muted-foreground hover:text-primary">Chat</Link></li>
+                </>
+              ) : null}
+              <li><Link href="/about" className="text-muted-foreground hover:text-primary">About Us</Link></li>
+              <li><Link href="/contact" className="text-muted-foreground hover:text-primary">Contact</Link></li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold mb-3 text-foreground">Connect</h3>
+            <ul className="space-y-2 text-sm">
+              <li><Link href="/ngo-partnership" className="text-muted-foreground hover:text-primary flex items-center"><Handshake className="mr-2 h-4 w-4"/>NGO Partnerships</Link></li>
+              <li><Link href="/blog" className="text-muted-foreground hover:text-primary flex items-center"><Rss className="mr-2 h-4 w-4"/>Blog</Link></li>
+              {isAuthenticated && (
+                <li><Link href="/profile" className="text-muted-foreground hover:text-primary flex items-center"><User className="mr-2 h-4 w-4"/>Profile</Link></li>
+              )}
+            </ul>
+          </div>
         </div>
-        <div>
-          <h3 className="text-lg font-semibold mb-3 text-foreground">Quick Links</h3>
-          <ul className="space-y-2 text-sm">
-            <li><Link href="/#discover-sessions" className="text-muted-foreground hover:text-primary">Discover Sessions</Link></li>
-            <li><Link href="/auth?type=signup&role=teacher" className="text-muted-foreground hover:text-primary">Become a Teacher</Link></li>
-            <li><Link href="/about" className="text-muted-foreground hover:text-primary">About Us</Link></li>
-            <li><Link href="/contact" className="text-muted-foreground hover:text-primary">Contact</Link></li>
-          </ul>
-        </div>
-        <div>
-          <h3 className="text-lg font-semibold mb-3 text-foreground">Connect</h3>
-          <ul className="space-y-2 text-sm">
-            <li><Link href="/ngo-partnership" className="text-muted-foreground hover:text-primary flex items-center"><Handshake className="mr-2 h-4 w-4"/>NGO Partnerships</Link></li>
-            <li><Link href="/blog" className="text-muted-foreground hover:text-primary flex items-center"><Rss className="mr-2 h-4 w-4"/>Blog</Link></li>
-          </ul>
+        <div className="border-t border-border pt-6 text-center text-sm text-muted-foreground">
+          © {new Date().getFullYear()} Local Hive. All rights reserved.
+          <Link href="/privacy" className="ml-2 underline hover:text-primary">Privacy Policy</Link>
+          <Link href="/terms" className="ml-2 underline hover:text-primary">Terms of Service</Link>
         </div>
       </div>
-      <div className="border-t border-border pt-6 text-center text-sm text-muted-foreground">
-        © {new Date().getFullYear()} Local Hive. All rights reserved.
-        <Link href="/privacy" className="ml-2 underline hover:text-primary">Privacy Policy</Link>
-        <Link href="/terms" className="ml-2 underline hover:text-primary">Terms of Service</Link>
-      </div>
-    </div>
-  </footer>
-);
+    </footer>
+  );
+};

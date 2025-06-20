@@ -118,16 +118,17 @@ export function FilterControls({ onFilterChange, defaultFilters = {} }: FilterCo
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="price">Price Range: ₹{priceRange[0]} - ₹{priceRange[1] === 200 ? '200+' : priceRange[1]}</Label>
+          <Label htmlFor="price">Price Range: ₹{priceRange[0]} - ₹{priceRange[1] === 1000 ? '1000+' : priceRange[1]}</Label>
           <Slider
             id="price"
             min={0}
-            max={1000} // Max value for slider, can represent $200+
+            max={1000}
             step={10}
             value={[priceRange[0], priceRange[1]]}
             onValueChange={(value) => setPriceRange(value as [number, number])}
             className="py-2"
           />
+          <p className="text-xs text-muted-foreground mt-1">Adjust the slider and click 'Apply Filters' to update results.</p>
         </div>
       </div>
       <div className="mt-6 flex flex-col sm:flex-row gap-2 justify-end">
