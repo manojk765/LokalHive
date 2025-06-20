@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback, useEffect } from 'react';
-import { Marker } from 'react-leaflet';
 import BaseMap from './BaseMap';
 
 interface LocationPickerMapProps {
@@ -22,22 +21,32 @@ export default function LocationPickerMap({
     setPosition(initialLocation);
   }, [initialLocation[0], initialLocation[1]]);
 
-  const handleMarkerDrag = useCallback((e: any) => {
-    const marker = e.target;
-    const position: [number, number] = [marker.getLatLng().lat, marker.getLatLng().lng];
-    setPosition(position);
-    onLocationSelect?.(position);
+  const handleMapClick = useCallback((e: google.maps.MapMouseEvent) => {
+    if (e.latLng) {
+      const newPos: [number, number] = [e.latLng.lat(), e.latLng.lng()];
+      setPosition(newPos);
+      onLocationSelect?.(newPos);
+    }
+  }, [onLocationSelect]);
+
+  const handleMarkerDragEnd = useCallback((e: google.maps.MapMouseEvent) => {
+    if (e.latLng) {
+      const newPos: [number, number] = [e.latLng.lat(), e.latLng.lng()];
+      setPosition(newPos);
+      onLocationSelect?.(newPos);
+    }
   }, [onLocationSelect]);
 
   return (
-    <BaseMap center={position} zoom={13} className={className}>
-      <Marker
-        position={position}
-        draggable={true}
-        eventHandlers={{
-          dragend: handleMarkerDrag,
-        }}
-      />
+    <BaseMap
+      center={position}
+      zoom={13}
+      className={className}
+      onMapClick={handleMapClick}
+      onMarkerDragEnd={handleMarkerDragEnd}
+    >
+      {/* Marker handled in BaseMap/GoogleMap */}
+      {/* Pass marker and handlers as props if needed */}
     </BaseMap>
   );
 }

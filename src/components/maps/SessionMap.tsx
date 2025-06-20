@@ -4,6 +4,9 @@ import { Marker, Popup } from 'react-leaflet';
 import BaseMap from './BaseMap';
 import { Session } from '@/lib/types';
 import { Timestamp } from 'firebase/firestore';
+import { useState } from 'react';
+import MyGoogleMap from './GoogleMap';
+import { MarkerF, InfoWindowF } from '@react-google-maps/api';
 
 interface SessionMapProps {
   sessions: Session[];
@@ -16,6 +19,8 @@ export default function SessionMap({
   className,
   onSessionClick
 }: SessionMapProps) {
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+
   // Calculate the center based on the average of all session locations
   const center = sessions.length > 0
     ? [
@@ -40,29 +45,46 @@ export default function SessionMap({
   };
 
   return (
-    <BaseMap center={center} zoom={12} className={className}>
+    <MyGoogleMap
+      center={{ lat: center[0], lng: center[1] }}
+      zoom={12}
+      className={className}
+    >
       {sessions.map((session) => (
         session.coordinates && (
-          <Marker
+          <MarkerF
             key={session.id}
-            position={[session.coordinates.lat, session.coordinates.lng]}
-            eventHandlers={{
-              click: () => onSessionClick?.(session)
+            position={{ lat: session.coordinates.lat, lng: session.coordinates.lng }}
+            onClick={() => {
+              setActiveSessionId(session.id);
+              onSessionClick?.(session);
             }}
           >
-            <Popup>
-              <div className="p-2">
-                <h3 className="font-semibold">{session.title}</h3>
-                <p className="text-sm text-gray-600">{session.description}</p>
-                <p className="text-sm mt-1">
-                  {formatDateTime(session.dateTime).date} at{' '}
-                  {formatDateTime(session.dateTime).time}
-                </p>
-              </div>
-            </Popup>
-          </Marker>
+            {activeSessionId === session.id && (
+              <InfoWindowF onCloseClick={() => setActiveSessionId(null)}>
+                <div className="p-2 min-w-[180px]">
+                  <h3 className="font-semibold mb-1">{session.title}</h3>
+                  <p className="text-sm text-gray-600 mb-1">{session.description}</p>
+                  <p className="text-xs mb-1">
+                    {typeof session.dateTime === 'string'
+                      ? new Date(session.dateTime).toLocaleDateString() + ' ' + new Date(session.dateTime).toLocaleTimeString()
+                      : ''}
+                  </p>
+                  <p className="text-xs font-semibold mb-2">₹{session.price}</p>
+                  <a
+                    href={`https://www.google.com/maps?q=${session.coordinates.lat},${session.coordinates.lng}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs font-medium transition"
+                  >
+                    Open in Google Maps
+                  </a>
+                </div>
+              </InfoWindowF>
+            )}
+          </MarkerF>
         )
       ))}
-    </BaseMap>
+    </MyGoogleMap>
   );
 }

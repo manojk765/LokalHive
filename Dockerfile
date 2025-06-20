@@ -8,19 +8,22 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm install --legacy-peer-deps
 
-# 4. Copy the rest of your app
+# 4. Copy the rest of your app (including .env)
 COPY . .
 
-# 5. Build the Next.js app
+# 5. Copy .env file explicitly (in case .dockerignore excludes it)
+COPY .env .env
+
+# 6. Build the Next.js app
 RUN npm run build
 
-# 6. Production image, copy built assets and install only production deps
+# 7. Production image, copy built assets and install only production deps
 FROM node:18-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
 
-# If you use .env files, copy them here
+# Copy .env for runtime
 COPY .env .env
 
 # Copy only necessary files for running the app
@@ -34,6 +37,6 @@ COPY --from=builder /app/next-env.d.ts ./next-env.d.ts
 COPY --from=builder /app/tailwind.config.ts ./tailwind.config.ts
 COPY --from=builder /app/postcss.config.mjs ./postcss.config.mjs
 
-# 7. Expose port and start the app
+# 8. Expose port and start the app
 EXPOSE 3000
 CMD ["npm", "start"]

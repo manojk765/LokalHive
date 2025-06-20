@@ -4,38 +4,29 @@ import { useEffect } from 'react';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import MyGoogleMap from './GoogleMap';
 
 interface BaseMapProps {
   center: [number, number];
   zoom: number;
   children?: React.ReactNode;
   className?: string;
+  marker?: { lat: number; lng: number };
+  onMapClick?: (e: google.maps.MapMouseEvent) => void;
+  onMarkerDragEnd?: (e: google.maps.MapMouseEvent) => void;
 }
 
-export default function BaseMap({ center, zoom, children, className = 'h-[400px] w-full' }: BaseMapProps) {
-  useEffect(() => {
-    // Fix Leaflet's default icon path issues
-    delete (L.Icon.Default.prototype as any)._getIconUrl;
-    L.Icon.Default.mergeOptions({
-      iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-      iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-    });
-  }, []);
-
-  // Add z-0 to ensure map is below overlays and error messages
+export default function BaseMap({ center, zoom, children, className = 'h-[400px] w-full', marker, onMapClick, onMarkerDragEnd }: BaseMapProps) {
   return (
-    <MapContainer
-      center={center}
+    <MyGoogleMap
+      center={{ lat: center[0], lng: center[1] }}
       zoom={zoom}
-      className={`z-0 ${className}`}
-      scrollWheelZoom={true}
+      className={className}
+      marker={marker}
+      onMapClick={onMapClick}
+      onMarkerDragEnd={onMarkerDragEnd}
     >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
       {children}
-    </MapContainer>
+    </MyGoogleMap>
   );
 } 

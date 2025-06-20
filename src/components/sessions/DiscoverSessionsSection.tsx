@@ -11,8 +11,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, where, orderBy, Timestamp, limit, startAfter, QueryConstraint, QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import BaseMap from '../maps/BaseMap';
-import { Marker, Popup } from 'react-leaflet';
 import SessionMap from '../maps/SessionMap';
 
 const ITEMS_PER_PAGE = 6;
@@ -282,37 +280,9 @@ export function DiscoverSessionsSection() {
       
       <section className="my-16 p-6 md:p-10 bg-card rounded-lg shadow-lg">
         <h2 className="text-3xl font-semibold text-center text-primary mb-6">Find Sessions Near You</h2>
-         <div className="mb-8 rounded-lg overflow-hidden">
-          <BaseMap center={INDIA_CENTER} zoom={4} className="h-[500px] w-full">
-            {displayedSessions.map((session) => (
-              session.coordinates &&
-              typeof session.coordinates.lat === 'number' &&
-              typeof session.coordinates.lng === 'number' &&
-              !isNaN(session.coordinates.lat) &&
-              !isNaN(session.coordinates.lng) && (
-                <Marker
-                  key={session.id}
-                  position={[session.coordinates.lat, session.coordinates.lng]}
-                  eventHandlers={{
-                    click: () => handleSessionClick(session)
-                  }}
-                >
-                  <Popup>
-                    <div className="p-2">
-                      <h3 className="font-semibold">{session.title}</h3>
-                      <p className="text-sm text-gray-600">{session.description}</p>
-                      <p className="text-sm mt-1">
-                        {formatDateTime(session.dateTime).date} at{' '}
-                        {formatDateTime(session.dateTime).time}
-                      </p>
-                      <p className="text-sm font-semibold mt-1">₹{session.price}</p>
-                    </div>
-                  </Popup>
-                </Marker>
-              )
-            ))}
-          </BaseMap>
-         </div>
+        <div className="mb-8 rounded-lg overflow-hidden">
+          <SessionMap sessions={displayedSessions} className="h-[500px] w-full" onSessionClick={handleSessionClick} />
+        </div>
       </section>
     </>
   );
