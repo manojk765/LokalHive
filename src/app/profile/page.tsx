@@ -10,7 +10,7 @@ import { Mail, Phone, User, Briefcase, CalendarDays, Settings, Edit3, LogOut, Lo
 import { Badge } from '@/components/ui/badge';
 
 export default function ProfilePage() {
-  const { user, isAuthenticated, logout, isLoading: authLoading } = useAuth();
+  const { user, isAuthenticated, signOut , isLoading: authLoading } = useAuth();
   const router = useRouter();
 
   if (authLoading) {
@@ -32,7 +32,7 @@ export default function ProfilePage() {
   }
   
   const handleLogout = () => {
-    logout();
+    signOut();
     router.push('/');
   };
 

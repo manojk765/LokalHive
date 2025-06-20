@@ -117,7 +117,10 @@ export default function CreateSessionPage() {
       toast({ title: "Error", description: "User not authenticated.", variant: "destructive" });
       return;
     }
-
+    if (!db) {
+      toast({ title: "Database Error", description: "Firestore is not initialized.", variant: "destructive" });
+      return;
+    }
     const sessionDataToSave: Partial<SessionDocument> = {
       title: data.title,
       description: data.description,
@@ -144,7 +147,7 @@ export default function CreateSessionPage() {
 
     try {
       const docRef = await addDoc(collection(db, "sessions"), sessionDataToSave);
-      toast({ title: "Session Created!", description: `Your session "${data.title}" has been created.`, icon: <Check className="h-5 w-5 text-green-500" /> });
+      toast({ title: "Session Created!", description: `Your session "${data.title}" has been created.` });
       router.push('/teaching');
     } catch (error: any) {
       console.error("Error creating session:", error);

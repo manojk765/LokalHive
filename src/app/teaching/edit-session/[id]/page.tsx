@@ -62,6 +62,11 @@ export default function EditSessionPage() {
     if (sessionId && user) {
       const fetchSession = async () => {
         setIsPageLoading(true);
+        if (!db) {
+          toast({ title: "Database Error", description: "Firestore is not initialized.", variant: "destructive" });
+          setIsPageLoading(false);
+          return;
+        }
         try {
           const sessionDocRef = doc(db, "sessions", sessionId);
           const sessionSnap = await getDoc(sessionDocRef);
@@ -129,6 +134,10 @@ export default function EditSessionPage() {
       toast({title: "Error", description: "User not found.", variant: "destructive"});
       return;
     }
+    if (!db) {
+      toast({ title: "Database Error", description: "Firestore is not initialized.", variant: "destructive" });
+      return;
+    }
     try {
       const sessionDocRef = doc(db, "sessions", sessionId);
       const dataToUpdate: Partial<SessionDocument> = {
@@ -161,7 +170,7 @@ export default function EditSessionPage() {
 
 
       await updateDoc(sessionDocRef, dataToUpdate);
-      toast({ title: "Session Updated!", description: `Your session "${data.title}" has been updated.`, icon: <Check className="h-5 w-5 text-green-500" /> });
+      toast({ title: "Session Updated!", description: `Your session "${data.title}" has been updated.` });
       router.push('/teaching');
     } catch (error: any) {
       console.error("Error updating session:", error);
@@ -178,7 +187,7 @@ export default function EditSessionPage() {
 
   // Handler for pincode search
   const handlePincodeSearch = async () => {
-    if (!/^[1-9][0-9]{5}$/.test(pincode)) {
+    if (!/^[1-9][0-9]{5}$/.test(pincode || "")) {
       toast({ title: "Invalid Pincode", description: "Please enter a valid 6-digit Indian pincode.", variant: "destructive" });
       return;
     }

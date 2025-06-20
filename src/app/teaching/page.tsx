@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useState, useCallback } from 'react';
@@ -58,6 +57,11 @@ export default function MyTeachingPage() {
     }
     console.log("fetchTeacherSessions: Fetching sessions for teacherId:", user.id);
     setIsLoadingSessions(true);
+    if (!db) {
+      toast({ title: "Database Error", description: "Firestore is not initialized.", variant: "destructive" });
+      setIsLoadingSessions(false);
+      return;
+    }
     try {
       const q = query(collection(db, "sessions"), where("teacherId", "==", user.id), orderBy("createdAt", "desc"));
       const querySnapshot = await getDocs(q);
@@ -100,6 +104,11 @@ export default function MyTeachingPage() {
     }
     setIsLoadingRequests(true);
     console.log("fetchBookingRequests: Fetching requests for teacherId:", user.id);
+    if (!db) {
+      toast({ title: "Database Error", description: "Firestore is not initialized.", variant: "destructive" });
+      setIsLoadingRequests(false);
+      return;
+    }
     try {
       const q = query(
         collection(db, "bookingRequests"), 
@@ -120,6 +129,10 @@ export default function MyTeachingPage() {
         
         let learnerName = requestData.learnerName || "Unknown Learner";
         if (request.learnerId && !requestData.learnerName) { 
+          if (!db) {
+            toast({ title: "Database Error", description: "Firestore is not initialized.", variant: "destructive" });
+            return learnerName;
+          }
           const learnerDocRef = doc(db, "users", request.learnerId);
           const learnerDocSnap = await getDoc(learnerDocRef);
           if (learnerDocSnap.exists()) learnerName = (learnerDocSnap.data() as UserProfile).name || "Learner";
@@ -127,6 +140,10 @@ export default function MyTeachingPage() {
 
         let sessionTitle = requestData.sessionTitle || "Unknown Session";
         if (request.sessionId && !requestData.sessionTitle) { 
+           if (!db) {
+             toast({ title: "Database Error", description: "Firestore is not initialized.", variant: "destructive" });
+             return sessionTitle;
+           }
            const sessionDocRef = doc(db, "sessions", request.sessionId);
            const sessionDocSnap = await getDoc(sessionDocRef);
            if (sessionDocSnap.exists()) sessionTitle = (sessionDocSnap.data() as Session).title || "Session";
@@ -159,6 +176,10 @@ export default function MyTeachingPage() {
   }, [authLoading, isAuthenticated, user, router, fetchTeacherSessions, fetchBookingRequests]);
 
   const handleDeleteSession = async (sessionId: string) => {
+    if (!db) {
+      toast({ title: "Database Error", description: "Firestore is not initialized.", variant: "destructive" });
+      return;
+    }
     try {
       await deleteDoc(doc(db, "sessions", sessionId));
       toast({ title: "Session Deleted", description: "The session has been successfully deleted.", variant: "default" });
@@ -170,6 +191,10 @@ export default function MyTeachingPage() {
   };
   
   const handleRequestAction = async (requestId: string, newStatus: BookingRequest['status']) => {
+    if (!db) {
+      toast({ title: "Database Error", description: "Firestore is not initialized.", variant: "destructive" });
+      return;
+    }
     try {
       const requestRef = doc(db, "bookingRequests", requestId);
       await updateDoc(requestRef, { 
@@ -324,7 +349,11 @@ export default function MyTeachingPage() {
                             <Badge variant={getSessionStatusBadgeVariant(session.status)} className="capitalize">{session.status || "Unknown"}</Badge>
                             </div>
                             <CardDescription className="text-sm text-muted-foreground">
-                            {session.location || "Location TBD"} - {session.dateTime instanceof Date ? session.dateTime.toLocaleDateString() : (session.dateTime ? new Date(session.dateTime).toLocaleDateString() : "Date TBD")}
+                            {session.location || "Location TBD"} - {(() => {
+                              if (session.dateTime instanceof Date) return session.dateTime.toLocaleDateString();
+                              if (typeof session.dateTime === 'string') return new Date(session.dateTime).toLocaleDateString();
+                              return "Date TBD";
+                            })()}
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="p-4 text-sm">

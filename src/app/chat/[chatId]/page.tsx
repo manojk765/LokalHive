@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useAuth } from '@/components/AppLayoutClient';
@@ -73,6 +72,12 @@ export default function ChatPage() {
         return;
     }
 
+    if (!db) {
+      toast({ title: "Database Error", description: "Firestore is not initialized.", variant: "destructive" });
+      setIsLoadingPage(false);
+      return;
+    }
+
     setIsLoadingPage(true);
     console.log(`ChatPage: Attempting to load chat thread for chatId: ${chatId}`);
     
@@ -90,6 +95,10 @@ export default function ChatPage() {
             for (const participantId of threadData.participantIds) {
                 if (!participantsInfo[participantId]?.name) { 
                     console.log(`ChatPage: Participant info for ${participantId} in thread ${chatId} is incomplete or missing, fetching...`);
+                    if (!db) {
+                        console.warn("ChatPage: Firestore db is null, cannot fetch participant info.");
+                        continue;
+                    }
                     const userDocRef = doc(db, "users", participantId);
                     const userDocSnap = await getDoc(userDocRef);
                     if (userDocSnap.exists()) {
@@ -132,6 +141,11 @@ export default function ChatPage() {
         setIsLoadingPage(false);
     });
 
+    if (!db) {
+      toast({ title: "Database Error", description: "Firestore is not initialized.", variant: "destructive" });
+      setIsLoadingPage(false);
+      return;
+    }
     const messagesQuery = query(collection(db, "chatThreads", chatId, "messages"), orderBy("timestamp", "asc"));
     console.log(`ChatPage: Subscribing to messages for chat thread ${chatId}`);
     const messagesUnsubscribe = onSnapshot(messagesQuery, (querySnapshot) => {
@@ -208,16 +222,26 @@ export default function ChatPage() {
     }
 
     setIsSending(true);
+    if (!db) {
+      toast({ title: "Database Error", description: "Firestore is not initialized.", variant: "destructive" });
+      setIsSending(false);
+      return;
+    }
     const messageData: ChatMessageDocument = {
       chatId: chatThread.id,
       senderId: user.id,
       receiverId: otherParticipantId, 
       text: newMessage.trim(),
-      // timestamp will be set by serverTimestamp
+      timestamp: serverTimestamp() as any // serverTimestamp is a FieldValue, but we cast for Firestore
     };
     console.log("ChatPage: Prepared messageData for sending:", messageData);
 
     try {
+      if (!db) {
+        toast({ title: "Database Error", description: "Firestore is not initialized.", variant: "destructive" });
+        setIsSending(false);
+        return;
+      }
       const messagesCollectionRef = collection(db, "chatThreads", chatThread.id, "messages");
       await addDoc(messagesCollectionRef, {
         ...messageData,
@@ -225,6 +249,11 @@ export default function ChatPage() {
       });
       console.log("ChatPage: Message added to subcollection successfully.");
 
+      if (!db) {
+        toast({ title: "Database Error", description: "Firestore is not initialized.", variant: "destructive" });
+        setIsSending(false);
+        return;
+      }
       const threadDocRef = doc(db, "chatThreads", chatThread.id);
       await updateDoc(threadDocRef, {
         lastMessageText: newMessage.trim(),
