@@ -29,7 +29,7 @@ export default function ProfilePage() {
         <Button onClick={() => router.push('/auth?redirect=/profile')}>Go to Login</Button>
       </div>
     );
-  }
+  } 
   
   const handleLogout = () => {
     signOut();
